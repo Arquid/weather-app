@@ -18,7 +18,7 @@ A simple, modern weather application built with **React** that fetches current w
 ## Installation
 
 ```bash
-git clone https://github.com/yourusername/weather-app.git
+git clone https://github.com/Arquid/weather-app.git
 cd weather-app
 npm install
 add your API KEY to Weather.jsx (OpenWeatherMap API)
