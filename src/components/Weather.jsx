@@ -10,20 +10,18 @@ function Weather() {
 
   const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
 
-  const getWeather = async () => {
-    if (!city) return;
-
+  const fetchWeather = async (query) => {
     try {
       setLoading(true);
       setError("");
 
       const res1 = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`
+        `https://api.openweathermap.org/data/2.5/weather?${query}&appid=${apiKey}&units=metric`
       );
       const data1 = await res1.json();
 
       const res2 = await fetch(
-        `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`
+        `https://api.openweathermap.org/data/2.5/forecast?${query}&appid=${apiKey}&units=metric`
       );
       const data2 = await res2.json();
 
@@ -36,10 +34,8 @@ function Weather() {
       }
 
       setCurrent(data1);
-
       const daily = data2.list.filter((item) => item.dt_txt.includes("12:00:00"));
       setForecast(daily);
-
       setLoading(false);
     } catch (err) {
       console.error(err);
@@ -47,6 +43,32 @@ function Weather() {
       setLoading(false);
     }
   };
+
+  const getWeather = () => {
+    if (!city || loading) return;
+
+    fetchWeather(`q=${encodeURIComponent(city)}`);
+  };
+
+  const getWeatherByLocation = () => {
+    if (loading) return;
+    if (!navigator.geolocation) {
+      setError("Geolocation not supported");
+      return;
+    }
+
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        fetchWeather(`lat=${latitude}&lon=${longitude}`);
+      },
+      () => {
+        setError("Location access denied")
+        setLoading(false);
+      }
+    )
+  }
 
   const getIcon = (icon) =>
     `https://openweathermap.org/img/wn/${icon}@2x.png`;
@@ -60,7 +82,8 @@ function Weather() {
         onChange={(e) => setCity(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && getWeather()}
       />
-      <button onClick={getWeather}>Search</button>
+      <button onClick={getWeather} disabled={loading}>Search</button>
+      <button onClick={getWeatherByLocation} disabled={loading}>📍 Own location</button>
       <button onClick={() => setDarkMode(!darkMode)}>
         {darkMode ? "☀️ Light" : "🌙 Dark"}
       </button>
