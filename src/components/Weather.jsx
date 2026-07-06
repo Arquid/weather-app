@@ -1,48 +1,56 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 function Weather() {
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState(localStorage.getItem("lastCity") || "");
   const [current, setCurrent] = useState(null);
   const [forecast, setForecast] = useState([]);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(localStorage.getItem("darkMode") === "true");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
 
-  const fetchWeather = async (query) => {
-    try {
-      setLoading(true);
-      setError("");
+  const fetchWeather = useCallback(async (query) => {
+  try {
+    setLoading(true);
+    setError("");
 
-      const [res1, res2] = await Promise.all([
-        fetch(`https://api.openweathermap.org/data/2.5/weather?${query}&appid=${apiKey}&units=metric`),
-        fetch(`https://api.openweathermap.org/data/2.5/forecast?${query}&appid=${apiKey}&units=metric`)
-      ]);
-      const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
+    const [res1, res2] = await Promise.all([
+      fetch(`https://api.openweathermap.org/data/2.5/weather?${query}&appid=${apiKey}&units=metric`),
+      fetch(`https://api.openweathermap.org/data/2.5/forecast?${query}&appid=${apiKey}&units=metric`)
+    ]);
+    const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
 
-      if (!res1.ok || !res2.ok) {
-        setError(data1.message || data2.message || "Something went wrong");
-        setCurrent(null);
-        setForecast([]);
-        setLoading(false);
-        return;
-      }
-
-      setCurrent(data1);
-      const daily = data2.list.filter((item) => item.dt_txt.includes("12:00:00"));
-      setForecast(daily);
+    if (!res1.ok || !res2.ok) {
+      setError(data1.message || data2.message || "Something went wrong");
+      setCurrent(null);
+      setForecast([]);
       setLoading(false);
-    } catch (err) {
-      console.error(err);
-      setError("Something went wrong");
-      setLoading(false);
+      return;
     }
-  };
+
+    setCurrent(data1);
+    const daily = data2.list.filter((item) => item.dt_txt.includes("12:00:00"));
+    setForecast(daily);
+    setLoading(false);
+  } catch (err) {
+    console.error(err);
+    setError("Something went wrong");
+    setLoading(false);
+  }
+}, [apiKey]);
+
+  useEffect(() => {
+  const savedCity = localStorage.getItem("lastCity");
+  if (savedCity) {
+    Promise.resolve().then(() => fetchWeather(`q=${encodeURIComponent(savedCity)}`));
+  }
+}, [fetchWeather]);
 
   const getWeather = () => {
     if (!city || loading) return;
 
+    localStorage.setItem("lastCity", city)
     fetchWeather(`q=${encodeURIComponent(city)}`);
   };
 
@@ -75,12 +83,18 @@ function Weather() {
       <input
         type="text"
         placeholder="Enter city"
+        value={city}
         onChange={(e) => setCity(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && getWeather()}
       />
       <button onClick={getWeather} disabled={loading}>Search</button>
       <button onClick={getWeatherByLocation} disabled={loading}>📍 Own location</button>
-      <button onClick={() => setDarkMode(!darkMode)}>
+      <button
+        onClick={() => {
+          localStorage.setItem("darkMode", !darkMode)
+          setDarkMode(!darkMode)}
+        }
+      >
         {darkMode ? "☀️ Light" : "🌙 Dark"}
       </button>
       {loading && <p>Loading...</p>}
