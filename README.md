@@ -21,5 +21,18 @@ A simple, modern weather application built with **React** that fetches current w
 git clone https://github.com/Arquid/weather-app.git
 cd weather-app
 npm install
-add your API KEY to Weather.jsx (OpenWeatherMap API)
+```
+
+Copy `.env.example` to `.env` and add your OpenWeatherMap API key:
+
+```bash
+cp .env.example .env
+```
+
+```
+VITE_WEATHER_API_KEY=your_api_key_here
+```
+
+```bash
 npm run dev
+```
