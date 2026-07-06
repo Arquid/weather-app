@@ -15,15 +15,11 @@ function Weather() {
       setLoading(true);
       setError("");
 
-      const res1 = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?${query}&appid=${apiKey}&units=metric`
-      );
-      const data1 = await res1.json();
-
-      const res2 = await fetch(
-        `https://api.openweathermap.org/data/2.5/forecast?${query}&appid=${apiKey}&units=metric`
-      );
-      const data2 = await res2.json();
+      const [res1, res2] = await Promise.all([
+        fetch(`https://api.openweathermap.org/data/2.5/weather?${query}&appid=${apiKey}&units=metric`),
+        fetch(`https://api.openweathermap.org/data/2.5/forecast?${query}&appid=${apiKey}&units=metric`)
+      ]);
+      const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
 
       if (!res1.ok || !res2.ok) {
         setError(data1.message || data2.message || "Something went wrong");
