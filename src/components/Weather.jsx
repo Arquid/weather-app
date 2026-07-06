@@ -8,7 +8,7 @@ function Weather() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const apiKey = "YOUR_API_KEY_HERE";
+  const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
 
   const getWeather = async () => {
     if (!city) return;
@@ -18,17 +18,17 @@ function Weather() {
       setError("");
 
       const res1 = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`
+        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`
       );
       const data1 = await res1.json();
 
       const res2 = await fetch(
-        `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`
+        `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`
       );
       const data2 = await res2.json();
 
-      if (data1.cod !== 200) {
-        setError("City not found");
+      if (!res1.ok || !res2.ok) {
+        setError(data1.message || data2.message || "Something went wrong");
         setCurrent(null);
         setForecast([]);
         setLoading(false);
@@ -37,7 +37,7 @@ function Weather() {
 
       setCurrent(data1);
 
-      const daily = data2.list.filter((_, i) => i % 8 === 0);
+      const daily = data2.list.filter((item) => item.dt_txt.includes("12:00:00"));
       setForecast(daily);
 
       setLoading(false);
@@ -69,15 +69,18 @@ function Weather() {
       {current && (
         <div className="current">
           <h2>{current.name}</h2>
-          <img src={getIcon(current?.weather?.[0]?.icon)} alt="" />
+          <img
+            src={getIcon(current?.weather?.[0]?.icon)}
+            alt={current?.weather?.[0]?.description || "Weather image"}
+          />
           <h3>Today</h3>
           <p>{current?.main?.temp?.toFixed(1)} °C</p>
           <p>Wind: {current?.wind?.speed?.toFixed(1)} m/s</p>
         </div>
       )}
       <div className="forecast">
-        {forecast.map((day, index) => (
-          <div key={index} className="card">
+        {forecast.map((day) => (
+          <div key={day.dt} className="card">
             <p>
               {new Date(day.dt_txt).toLocaleDateString("fi-FI", {
                 weekday: "short",
@@ -85,7 +88,10 @@ function Weather() {
                 month: "numeric",
               })}
             </p>
-            <img src={getIcon(day?.weather?.[0]?.icon)} alt="" />
+            <img
+              src={getIcon(day?.weather?.[0]?.icon)}
+              alt={day?.weather?.[0]?.description || "Weather image"}
+            />
             <p>{day?.main?.temp?.toFixed(1)} °C</p>
             <p>Wind: {day?.wind?.speed?.toFixed(1)} m/s</p>
           </div>
