@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 function Weather() {
   const [city, setCity] = useState(localStorage.getItem("lastCity") || "");
@@ -9,43 +9,59 @@ function Weather() {
   const [error, setError] = useState("");
 
   const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
+  const abortRef = useRef(null);
+  const didInit = useRef(false);
 
   const fetchWeather = useCallback(async (query) => {
-  try {
-    setLoading(true);
-    setError("");
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-    const [res1, res2] = await Promise.all([
-      fetch(`https://api.openweathermap.org/data/2.5/weather?${query}&appid=${apiKey}&units=metric`),
-      fetch(`https://api.openweathermap.org/data/2.5/forecast?${query}&appid=${apiKey}&units=metric`)
-    ]);
-    const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
+    try {
+      setLoading(true);
+      setError("");
 
-    if (!res1.ok || !res2.ok) {
-      setError(data1.message || data2.message || "Something went wrong");
-      setCurrent(null);
-      setForecast([]);
+      const [res1, res2] = await Promise.all([
+        fetch(`https://api.openweathermap.org/data/2.5/weather?${query}&appid=${apiKey}&units=metric`, { signal: controller.signal }),
+        fetch(`https://api.openweathermap.org/data/2.5/forecast?${query}&appid=${apiKey}&units=metric`, { signal: controller.signal })
+      ]);
+      const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
+
+      if (!res1.ok || !res2.ok) {
+        setError(data1.message || data2.message || "Something went wrong");
+        setCurrent(null);
+        setForecast([]);
+        setLoading(false);
+        return;
+      }
+
+      setCurrent(data1);
+      const daily = data2.list.filter((item) => item.dt_txt.includes("12:00:00"));
+      setForecast(daily);
       setLoading(false);
-      return;
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      console.error(err);
+      setError("Something went wrong");
+      setLoading(false);
     }
-
-    setCurrent(data1);
-    const daily = data2.list.filter((item) => item.dt_txt.includes("12:00:00"));
-    setForecast(daily);
-    setLoading(false);
-  } catch (err) {
-    console.error(err);
-    setError("Something went wrong");
-    setLoading(false);
-  }
-}, [apiKey]);
+  }, [apiKey]);
 
   useEffect(() => {
-  const savedCity = localStorage.getItem("lastCity");
-  if (savedCity) {
-    Promise.resolve().then(() => fetchWeather(`q=${encodeURIComponent(savedCity)}`));
-  }
-}, [fetchWeather]);
+    if (!apiKey) {
+      console.warn("VITE_WEATHER_API_KEY is not set — check your .env file");
+    }
+  }, [apiKey]);
+
+  useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
+
+    const savedCity = localStorage.getItem("lastCity");
+    if (savedCity) {
+      Promise.resolve().then(() => fetchWeather(`q=${encodeURIComponent(savedCity)}`));
+    }
+  }, [fetchWeather]);
 
   const getWeather = () => {
     const trimmedCity = city.trim();
