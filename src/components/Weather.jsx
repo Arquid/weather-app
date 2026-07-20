@@ -48,10 +48,11 @@ function Weather() {
 }, [fetchWeather]);
 
   const getWeather = () => {
-    if (!city || loading) return;
+    const trimmedCity = city.trim();
+    if (!trimmedCity || loading) return;
 
-    localStorage.setItem("lastCity", city)
-    fetchWeather(`q=${encodeURIComponent(city)}`);
+    localStorage.setItem("lastCity", trimmedCity);
+    fetchWeather(`q=${encodeURIComponent(trimmedCity)}`);
   };
 
   const getWeatherByLocation = () => {
