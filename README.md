@@ -38,3 +38,14 @@ VITE_WEATHER_API_KEY=your_api_key_here
 ```bash
 npm run dev
 ```
+
+---
+
+## Testing
+
+Automated tests use **Vitest** and **React Testing Library**. `fetch`, geolocation, and `localStorage` are mocked, so no API key or network access is required to run them.
+
+```bash
+npm test          # run once
+npm run test:watch  # watch mode
+```
