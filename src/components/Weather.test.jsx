@@ -121,6 +121,31 @@ describe("Weather", () => {
     expect(screen.getByRole("button", { name: /Light/ })).toBeInTheDocument();
   });
 
+  it("toggles between Celsius and Fahrenheit without an extra fetch", async () => {
+    globalThis.fetch = mockFetchSuccess();
+    const user = userEvent.setup();
+    render(<Weather />);
+
+    await user.type(screen.getByPlaceholderText("Enter city"), "Helsinki");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    await screen.findByText("15.6 °C");
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+
+    await user.click(screen.getByRole("button", { name: "°F" }));
+
+    expect(screen.getByText("60.0 °F")).toBeInTheDocument();
+    expect(screen.getByText("Wind: 9.7 mph")).toBeInTheDocument();
+    expect(localStorage.getItem("unit")).toBe("imperial");
+    expect(screen.getByRole("button", { name: "°C" })).toBeInTheDocument();
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2); // toggling unit must not trigger a refetch
+
+    await user.click(screen.getByRole("button", { name: "°C" }));
+
+    expect(screen.getByText("15.6 °C")).toBeInTheDocument();
+    expect(localStorage.getItem("unit")).toBe("metric");
+  });
+
   it("restores the last searched city and dark mode from localStorage on mount", async () => {
     localStorage.setItem("lastCity", "Turku");
     localStorage.setItem("darkMode", "true");

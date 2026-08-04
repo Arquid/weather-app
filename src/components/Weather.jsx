@@ -5,6 +5,7 @@ function Weather() {
   const [current, setCurrent] = useState(null);
   const [forecast, setForecast] = useState([]);
   const [darkMode, setDarkMode] = useState(localStorage.getItem("darkMode") === "true");
+  const [unit, setUnit] = useState(localStorage.getItem("unit") || "metric");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -94,6 +95,25 @@ function Weather() {
   const getIcon = (icon) =>
     `https://openweathermap.org/img/wn/${icon}@2x.png`;
 
+  const formatTemp = (celsius) => {
+    if (celsius == null) return null;
+    return unit === "imperial" ? (celsius * 9) / 5 + 32 : celsius;
+  };
+
+  const formatWind = (mps) => {
+    if (mps == null) return null;
+    return unit === "imperial" ? mps * 2.23694 : mps;
+  };
+
+  const tempUnit = unit === "imperial" ? "°F" : "°C";
+  const windUnit = unit === "imperial" ? "mph" : "m/s";
+
+  const toggleUnit = () => {
+    const newUnit = unit === "metric" ? "imperial" : "metric";
+    setUnit(newUnit);
+    localStorage.setItem("unit", newUnit);
+  };
+
   return (
     <div className={darkMode ? "app dark" : "app"}>
       <h1>🌦️ Weather App</h1>
@@ -114,6 +134,7 @@ function Weather() {
       >
         {darkMode ? "☀️ Light" : "🌙 Dark"}
       </button>
+      <button onClick={toggleUnit}>{unit === "metric" ? "°F" : "°C"}</button>
       {loading && <p>Loading...</p>}
       {error && <p className="error">{error}</p>}
       {current && (
@@ -124,8 +145,8 @@ function Weather() {
             alt={current?.weather?.[0]?.description || "Weather image"}
           />
           <h3>Today</h3>
-          <p>{current?.main?.temp?.toFixed(1)} °C</p>
-          <p>Wind: {current?.wind?.speed?.toFixed(1)} m/s</p>
+          <p>{formatTemp(current?.main?.temp)?.toFixed(1)} {tempUnit}</p>
+          <p>Wind: {formatWind(current?.wind?.speed)?.toFixed(1)} {windUnit}</p>
         </div>
       )}
       <div className="forecast">
@@ -142,8 +163,8 @@ function Weather() {
               src={getIcon(day?.weather?.[0]?.icon)}
               alt={day?.weather?.[0]?.description || "Weather image"}
             />
-            <p>{day?.main?.temp?.toFixed(1)} °C</p>
-            <p>Wind: {day?.wind?.speed?.toFixed(1)} m/s</p>
+            <p>{formatTemp(day?.main?.temp)?.toFixed(1)} {tempUnit}</p>
+            <p>Wind: {formatWind(day?.wind?.speed)?.toFixed(1)} {windUnit}</p>
           </div>
         ))}
       </div>
