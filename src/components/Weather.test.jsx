@@ -178,11 +178,12 @@ describe("Weather", () => {
     expect(globalThis.fetch.mock.calls[0][0]).toContain("lon=24.9384");
   });
 
-  it("shows an error when geolocation access is denied", async () => {
+  it("shows a specific error when geolocation permission is denied", async () => {
     vi.stubGlobal("navigator", {
       ...navigator,
       geolocation: {
-        getCurrentPosition: (_success, error) => error(new Error("denied")),
+        getCurrentPosition: (_success, error) =>
+          error({ code: 1, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 }),
       },
     });
     const user = userEvent.setup();
@@ -190,7 +191,41 @@ describe("Weather", () => {
 
     await user.click(screen.getByRole("button", { name: /Own location/ }));
 
-    expect(await screen.findByText("Location access denied")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Location access denied — allow location access in your browser settings")
+    ).toBeInTheDocument();
+  });
+
+  it("shows a specific error when the position is unavailable", async () => {
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      geolocation: {
+        getCurrentPosition: (_success, error) =>
+          error({ code: 2, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 }),
+      },
+    });
+    const user = userEvent.setup();
+    render(<Weather />);
+
+    await user.click(screen.getByRole("button", { name: /Own location/ }));
+
+    expect(await screen.findByText("Your location could not be determined")).toBeInTheDocument();
+  });
+
+  it("shows a specific error when the geolocation request times out", async () => {
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      geolocation: {
+        getCurrentPosition: (_success, error) =>
+          error({ code: 3, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 }),
+      },
+    });
+    const user = userEvent.setup();
+    render(<Weather />);
+
+    await user.click(screen.getByRole("button", { name: /Own location/ }));
+
+    expect(await screen.findByText("Location request timed out — try again")).toBeInTheDocument();
   });
 
   it("disables the search buttons while a request is loading", async () => {

@@ -85,8 +85,16 @@ function Weather() {
         const { latitude, longitude } = position.coords;
         fetchWeather(`lat=${latitude}&lon=${longitude}`);
       },
-      () => {
-        setError("Location access denied")
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          setError("Location access denied — allow location access in your browser settings");
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          setError("Your location could not be determined");
+        } else if (err.code === err.TIMEOUT) {
+          setError("Location request timed out — try again");
+        } else {
+          setError("Something went wrong while getting your location");
+        }
         setLoading(false);
       }
     )
@@ -128,9 +136,9 @@ function Weather() {
       <button onClick={getWeatherByLocation} disabled={loading}>📍 Own location</button>
       <button
         onClick={() => {
-          localStorage.setItem("darkMode", !darkMode)
-          setDarkMode(!darkMode)}
-        }
+          localStorage.setItem("darkMode", !darkMode);
+          setDarkMode(!darkMode);
+        }}
       >
         {darkMode ? "☀️ Light" : "🌙 Dark"}
       </button>

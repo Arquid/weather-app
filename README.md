@@ -10,7 +10,8 @@ A simple, modern weather application built with **React** that fetches current w
 - 📍 "Own location" search using browser geolocation  
 - 📅 5-day forecast with date, temperature, wind speed, and weather icon  
 - 🌙 Dark and light mode toggle  
-- 💾 Last searched city and theme remembered between visits (localStorage)  
+- 🌡️ Celsius / Fahrenheit unit toggle (converted instantly, no extra request)  
+- 💾 Last searched city, theme, and unit remembered between visits (localStorage)  
 - ⏳ Loading state while fetching data  
 - ⚠️ Error handling for invalid city names  
 - 🧊 Temperature and wind speed rounded to 1 decimal  
