@@ -5,9 +5,10 @@ import Weather from "./Weather";
 
 const weatherData = {
   name: "Helsinki",
-  main: { temp: 15.567 },
+  main: { temp: 15.567, feels_like: 13.2, humidity: 72 },
   wind: { speed: 4.321 },
   weather: [{ icon: "01d", description: "clear sky" }],
+  sys: { sunrise: 1753070400, sunset: 1753124400 },
 };
 
 const forecastData = {
@@ -69,7 +70,21 @@ describe("Weather", () => {
     expect(await screen.findByText("Helsinki")).toBeInTheDocument();
     expect(screen.getByText("15.6 °C")).toBeInTheDocument();
     expect(screen.getByText("Wind: 4.3 m/s")).toBeInTheDocument();
-    expect(screen.getAllByText(/°C/)).toHaveLength(6); // current + 5 forecast days
+    expect(screen.getAllByText(/°C/)).toHaveLength(7); // current temp + feels like + 5 forecast days
+  });
+
+  it("shows feels-like temperature, humidity, sunrise and sunset for the current weather", async () => {
+    globalThis.fetch = mockFetchSuccess();
+    const user = userEvent.setup();
+    render(<Weather />);
+
+    await user.type(screen.getByPlaceholderText("Enter city"), "Helsinki");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    await screen.findByText("Helsinki");
+    expect(screen.getByText("Feels like: 13.2 °C")).toBeInTheDocument();
+    expect(screen.getByText("Humidity: 72%")).toBeInTheDocument();
+    expect(screen.getByText(/Sunrise: .* · Sunset: .*/)).toBeInTheDocument();
   });
 
   it("shows the API's own error message when the city is not found", async () => {

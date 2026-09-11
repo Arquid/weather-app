@@ -116,6 +116,14 @@ function Weather() {
   const tempUnit = unit === "imperial" ? "°F" : "°C";
   const windUnit = unit === "imperial" ? "mph" : "m/s";
 
+  const formatTime = (unixSeconds) => {
+    if (unixSeconds == null) return null;
+    return new Date(unixSeconds * 1000).toLocaleTimeString("fi-FI", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const toggleUnit = () => {
     const newUnit = unit === "metric" ? "imperial" : "metric";
     setUnit(newUnit);
@@ -154,7 +162,10 @@ function Weather() {
           />
           <h3>Today</h3>
           <p>{formatTemp(current?.main?.temp)?.toFixed(1)} {tempUnit}</p>
+          <p>Feels like: {formatTemp(current?.main?.feels_like)?.toFixed(1)} {tempUnit}</p>
           <p>Wind: {formatWind(current?.wind?.speed)?.toFixed(1)} {windUnit}</p>
+          <p>Humidity: {current?.main?.humidity}%</p>
+          <p>Sunrise: {formatTime(current?.sys?.sunrise)} · Sunset: {formatTime(current?.sys?.sunset)}</p>
         </div>
       )}
       <div className="forecast">
