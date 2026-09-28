@@ -13,11 +13,11 @@ const weatherData = {
 
 const forecastData = {
   list: [
-    { dt: 1, dt_txt: "2026-07-21 12:00:00", main: { temp: 16.7 }, wind: { speed: 3.1 }, weather: [{ icon: "01d", description: "clear sky" }] },
-    { dt: 2, dt_txt: "2026-07-22 12:00:00", main: { temp: 17.2 }, wind: { speed: 2.4 }, weather: [{ icon: "02d", description: "few clouds" }] },
-    { dt: 3, dt_txt: "2026-07-23 12:00:00", main: { temp: 18.9 }, wind: { speed: 1.9 }, weather: [{ icon: "03d", description: "scattered clouds" }] },
-    { dt: 4, dt_txt: "2026-07-24 12:00:00", main: { temp: 14.1 }, wind: { speed: 5.6 }, weather: [{ icon: "10d", description: "light rain" }] },
-    { dt: 5, dt_txt: "2026-07-25 12:00:00", main: { temp: 19.3 }, wind: { speed: 2.2 }, weather: [{ icon: "01d", description: "clear sky" }] },
+    { dt: 1, dt_txt: "2026-07-21 12:00:00", main: { temp: 16.7, humidity: 60 }, wind: { speed: 3.1 }, weather: [{ icon: "01d", description: "clear sky" }] },
+    { dt: 2, dt_txt: "2026-07-22 12:00:00", main: { temp: 17.2, humidity: 65 }, wind: { speed: 2.4 }, weather: [{ icon: "02d", description: "few clouds" }] },
+    { dt: 3, dt_txt: "2026-07-23 12:00:00", main: { temp: 18.9, humidity: 70 }, wind: { speed: 1.9 }, weather: [{ icon: "03d", description: "scattered clouds" }] },
+    { dt: 4, dt_txt: "2026-07-24 12:00:00", main: { temp: 14.1, humidity: 88 }, wind: { speed: 5.6 }, weather: [{ icon: "10d", description: "light rain" }] },
+    { dt: 5, dt_txt: "2026-07-25 12:00:00", main: { temp: 19.3, humidity: 55 }, wind: { speed: 2.2 }, weather: [{ icon: "01d", description: "clear sky" }] },
   ],
 };
 
@@ -87,6 +87,20 @@ describe("Weather", () => {
     expect(screen.getByText(/Sunrise: .* · Sunset: .*/)).toBeInTheDocument();
   });
 
+  it("shows humidity on each forecast card", async () => {
+    globalThis.fetch = mockFetchSuccess();
+    const user = userEvent.setup();
+    render(<Weather />);
+
+    await user.type(screen.getByPlaceholderText("Enter city"), "Helsinki");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    await screen.findByText("Helsinki");
+    for (const humidity of [60, 65, 70, 88, 55]) {
+      expect(screen.getByText(`Humidity: ${humidity}%`)).toBeInTheDocument();
+    }
+  });
+
   it("shows the API's own error message when the city is not found", async () => {
     globalThis.fetch = mockFetchNotFound();
     const user = userEvent.setup();
@@ -150,6 +164,7 @@ describe("Weather", () => {
     await user.click(screen.getByRole("button", { name: "°F" }));
 
     expect(screen.getByText("60.0 °F")).toBeInTheDocument();
+    expect(screen.getByText("Feels like: 55.8 °F")).toBeInTheDocument();
     expect(screen.getByText("Wind: 9.7 mph")).toBeInTheDocument();
     expect(localStorage.getItem("unit")).toBe("imperial");
     expect(screen.getByRole("button", { name: "°C" })).toBeInTheDocument();

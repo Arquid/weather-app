@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
+const GEO_ERRORS = {
+  1: "Location access denied — allow location access in your browser settings",
+  2: "Your location could not be determined",
+  3: "Location request timed out — try again",
+};
+
 function Weather() {
   const [city, setCity] = useState(localStorage.getItem("lastCity") || "");
   const [current, setCurrent] = useState(null);
@@ -86,15 +92,7 @@ function Weather() {
         fetchWeather(`lat=${latitude}&lon=${longitude}`);
       },
       (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
-          setError("Location access denied — allow location access in your browser settings");
-        } else if (err.code === err.POSITION_UNAVAILABLE) {
-          setError("Your location could not be determined");
-        } else if (err.code === err.TIMEOUT) {
-          setError("Location request timed out — try again");
-        } else {
-          setError("Something went wrong while getting your location");
-        }
+        setError(GEO_ERRORS[err.code] || "Something went wrong while getting your location");
         setLoading(false);
       }
     )
@@ -184,6 +182,7 @@ function Weather() {
             />
             <p>{formatTemp(day?.main?.temp)?.toFixed(1)} {tempUnit}</p>
             <p>Wind: {formatWind(day?.wind?.speed)?.toFixed(1)} {windUnit}</p>
+            <p>Humidity: {day?.main?.humidity}%</p>
           </div>
         ))}
       </div>

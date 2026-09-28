@@ -1,20 +1,21 @@
 # React Weather App 🌦️
 
-A simple, modern weather application built with **React** that fetches current weather and 5-day forecast data from the **OpenWeatherMap API**. Features include dark mode, geolocation search, persisted preferences, loading state, error handling, and temperature/wind speed rounded to 1 decimal.
+A simple, modern weather application built with **React** that fetches current weather and 5-day forecast data from the **OpenWeatherMap API**. Features include detailed current conditions, dark mode, geolocation search, a °C/°F toggle, persisted preferences, loading state, and error handling.
 
 ---
 
 ## Features
 
 - 🌍 Search weather by city name  
-- 📍 "Own location" search using browser geolocation  
-- 📅 5-day forecast with date, temperature, wind speed, and weather icon  
+- 📍 "Own location" search using browser geolocation, with clear messages for denied, unavailable, or timed-out location requests  
+- 🌤️ Current conditions: temperature, feels-like temperature, wind speed, humidity, sunrise and sunset  
+- 📅 5-day forecast with date, temperature, wind speed, humidity, and weather icon  
 - 🌙 Dark and light mode toggle  
 - 🌡️ Celsius / Fahrenheit unit toggle (converted instantly, no extra request)  
 - 💾 Last searched city, theme, and unit remembered between visits (localStorage)  
 - ⏳ Loading state while fetching data  
 - ⚠️ Error handling for invalid city names  
-- 🧊 Temperature and wind speed rounded to 1 decimal  
+- 🧊 Temperatures and wind speed rounded to 1 decimal  
 
 ---
 
