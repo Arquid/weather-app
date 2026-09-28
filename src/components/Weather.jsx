@@ -6,6 +6,20 @@ const GEO_ERRORS = {
   3: "Location request timed out — try again",
 };
 
+// Forecast entries are 3 hours apart, so every full day has one within 1.5 h of local noon.
+const pickMiddayForecasts = (list, tzOffset) => {
+  const byDay = new Map();
+  for (const item of list) {
+    const local = new Date((item.dt + tzOffset) * 1000);
+    const distance = Math.abs(local.getUTCHours() + local.getUTCMinutes() / 60 - 12);
+    if (distance > 1.5) continue;
+    const day = local.toISOString().slice(0, 10);
+    const best = byDay.get(day);
+    if (!best || distance < best.distance) byDay.set(day, { item, distance });
+  }
+  return [...byDay.values()].map(({ item }) => item);
+};
+
 function Weather() {
   const [city, setCity] = useState(localStorage.getItem("lastCity") || "");
   const [current, setCurrent] = useState(null);
@@ -43,8 +57,8 @@ function Weather() {
       }
 
       setCurrent(data1);
-      const daily = data2.list.filter((item) => item.dt_txt.includes("12:00:00"));
-      setForecast(daily);
+      const tzOffset = data2.city?.timezone ?? data1.timezone ?? 0;
+      setForecast(pickMiddayForecasts(data2.list, tzOffset));
       setLoading(false);
     } catch (err) {
       if (err.name === "AbortError") return;
@@ -114,13 +128,17 @@ function Weather() {
   const tempUnit = unit === "imperial" ? "°F" : "°C";
   const windUnit = unit === "imperial" ? "mph" : "m/s";
 
-  const formatTime = (unixSeconds) => {
+  // Shift by the city's UTC offset and format as UTC, so times show in the city's local time.
+  const formatTime = (unixSeconds, tzOffset) => {
     if (unixSeconds == null) return null;
-    return new Date(unixSeconds * 1000).toLocaleTimeString("fi-FI", {
+    return new Date((unixSeconds + tzOffset) * 1000).toLocaleTimeString("fi-FI", {
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "UTC",
     });
   };
+
+  const tzOffset = current?.timezone ?? 0;
 
   const toggleUnit = () => {
     const newUnit = unit === "metric" ? "imperial" : "metric";
@@ -133,6 +151,7 @@ function Weather() {
       <h1>🌦️ Weather App</h1>
       <input
         type="text"
+        aria-label="City"
         placeholder="Enter city"
         value={city}
         onChange={(e) => setCity(e.target.value)}
@@ -163,17 +182,20 @@ function Weather() {
           <p>Feels like: {formatTemp(current?.main?.feels_like)?.toFixed(1)} {tempUnit}</p>
           <p>Wind: {formatWind(current?.wind?.speed)?.toFixed(1)} {windUnit}</p>
           <p>Humidity: {current?.main?.humidity}%</p>
-          <p>Sunrise: {formatTime(current?.sys?.sunrise)} · Sunset: {formatTime(current?.sys?.sunset)}</p>
+          <p>
+            Sunrise: {formatTime(current?.sys?.sunrise, tzOffset)} · Sunset: {formatTime(current?.sys?.sunset, tzOffset)}
+          </p>
         </div>
       )}
       <div className="forecast">
         {forecast.map((day) => (
           <div key={day.dt} className="card">
             <p>
-              {new Date(day.dt_txt).toLocaleDateString("fi-FI", {
+              {new Date((day.dt + tzOffset) * 1000).toLocaleDateString("fi-FI", {
                 weekday: "short",
                 day: "numeric",
                 month: "numeric",
+                timeZone: "UTC",
               })}
             </p>
             <img

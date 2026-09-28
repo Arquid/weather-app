@@ -5,25 +5,46 @@ import Weather from "./Weather";
 
 const weatherData = {
   name: "Helsinki",
+  timezone: 0,
   main: { temp: 15.567, feels_like: 13.2, humidity: 72 },
   wind: { speed: 4.321 },
   weather: [{ icon: "01d", description: "clear sky" }],
   sys: { sunrise: 1753070400, sunset: 1753124400 },
 };
 
+// 12:00 UTC on 2026-07-21 … 2026-07-25
 const forecastData = {
+  city: { timezone: 0 },
   list: [
-    { dt: 1, dt_txt: "2026-07-21 12:00:00", main: { temp: 16.7, humidity: 60 }, wind: { speed: 3.1 }, weather: [{ icon: "01d", description: "clear sky" }] },
-    { dt: 2, dt_txt: "2026-07-22 12:00:00", main: { temp: 17.2, humidity: 65 }, wind: { speed: 2.4 }, weather: [{ icon: "02d", description: "few clouds" }] },
-    { dt: 3, dt_txt: "2026-07-23 12:00:00", main: { temp: 18.9, humidity: 70 }, wind: { speed: 1.9 }, weather: [{ icon: "03d", description: "scattered clouds" }] },
-    { dt: 4, dt_txt: "2026-07-24 12:00:00", main: { temp: 14.1, humidity: 88 }, wind: { speed: 5.6 }, weather: [{ icon: "10d", description: "light rain" }] },
-    { dt: 5, dt_txt: "2026-07-25 12:00:00", main: { temp: 19.3, humidity: 55 }, wind: { speed: 2.2 }, weather: [{ icon: "01d", description: "clear sky" }] },
+    { dt: 1784635200, main: { temp: 16.7, humidity: 60 }, wind: { speed: 3.1 }, weather: [{ icon: "01d", description: "clear sky" }] },
+    { dt: 1784721600, main: { temp: 17.2, humidity: 65 }, wind: { speed: 2.4 }, weather: [{ icon: "02d", description: "few clouds" }] },
+    { dt: 1784808000, main: { temp: 18.9, humidity: 70 }, wind: { speed: 1.9 }, weather: [{ icon: "03d", description: "scattered clouds" }] },
+    { dt: 1784894400, main: { temp: 14.1, humidity: 88 }, wind: { speed: 5.6 }, weather: [{ icon: "10d", description: "light rain" }] },
+    { dt: 1784980800, main: { temp: 19.3, humidity: 55 }, wind: { speed: 2.2 }, weather: [{ icon: "01d", description: "clear sky" }] },
   ],
 };
 
-function mockFetchSuccess() {
+const TOKYO_OFFSET = 9 * 3600;
+
+const tokyoWeatherData = {
+  ...weatherData,
+  name: "Tokyo",
+  timezone: TOKYO_OFFSET,
+  sys: { sunrise: 1784575800, sunset: 1784627700 }, // 19:30 UTC and 09:55 UTC
+};
+
+// 03:00 UTC is local noon in Tokyo; 12:00 UTC is 21:00 local and must not be picked.
+const tokyoForecastData = {
+  city: { timezone: TOKYO_OFFSET },
+  list: [
+    { dt: 1784635200 - 9 * 3600, main: { temp: 25.0, humidity: 60 }, wind: { speed: 3.1 }, weather: [{ icon: "01d", description: "clear sky" }] },
+    { dt: 1784635200, main: { temp: 10.0, humidity: 90 }, wind: { speed: 1.0 }, weather: [{ icon: "01n", description: "clear sky" }] },
+  ],
+};
+
+function mockFetchSuccess(current = weatherData, forecast = forecastData) {
   return vi.fn((url) => {
-    const body = url.includes("/forecast") ? forecastData : weatherData;
+    const body = url.includes("/forecast") ? forecast : current;
     return Promise.resolve({
       ok: true,
       json: () => Promise.resolve(body),
@@ -85,6 +106,32 @@ describe("Weather", () => {
     expect(screen.getByText("Feels like: 13.2 °C")).toBeInTheDocument();
     expect(screen.getByText("Humidity: 72%")).toBeInTheDocument();
     expect(screen.getByText(/Sunrise: .* · Sunset: .*/)).toBeInTheDocument();
+  });
+
+  it("shows sunrise and sunset in the searched city's local time", async () => {
+    globalThis.fetch = mockFetchSuccess(tokyoWeatherData, tokyoForecastData);
+    const user = userEvent.setup();
+    render(<Weather />);
+
+    await user.type(screen.getByLabelText("City"), "Tokyo");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    await screen.findByText("Tokyo");
+    expect(screen.getByText("Sunrise: 04.30 · Sunset: 18.55")).toBeInTheDocument();
+  });
+
+  it("picks the forecast entry closest to the city's local noon", async () => {
+    globalThis.fetch = mockFetchSuccess(tokyoWeatherData, tokyoForecastData);
+    const user = userEvent.setup();
+    render(<Weather />);
+
+    await user.type(screen.getByLabelText("City"), "Tokyo");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    await screen.findByText("Tokyo");
+    expect(screen.getByText("25.0 °C")).toBeInTheDocument();
+    expect(screen.queryByText("10.0 °C")).not.toBeInTheDocument();
+    expect(document.querySelectorAll(".card")).toHaveLength(1);
   });
 
   it("shows humidity on each forecast card", async () => {
