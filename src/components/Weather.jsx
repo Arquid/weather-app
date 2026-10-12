@@ -42,18 +42,20 @@ function Weather() {
         setCurrent(null);
         setForecast([]);
         setLoading(false);
-        return;
+        return false;
       }
 
       setCurrent(data1);
       const tzOffset = data2.city?.timezone ?? data1.timezone ?? 0;
       setForecast(pickMiddayForecasts(data2.list, tzOffset));
       setLoading(false);
+      return true;
     } catch (err) {
-      if (err.name === "AbortError") return;
+      if (err.name === "AbortError") return false;
       console.error(err);
       setError("Something went wrong");
       setLoading(false);
+      return false;
     }
   }, [apiKey]);
 
@@ -73,12 +75,12 @@ function Weather() {
     }
   }, [fetchWeather]);
 
-  const getWeather = () => {
+  const getWeather = async () => {
     const trimmedCity = city.trim();
     if (!trimmedCity || loading) return;
 
-    localStorage.setItem("lastCity", trimmedCity);
-    fetchWeather(`q=${encodeURIComponent(trimmedCity)}`);
+    const ok = await fetchWeather(`q=${encodeURIComponent(trimmedCity)}`);
+    if (ok) localStorage.setItem("lastCity", trimmedCity);
   };
 
   const getWeatherByLocation = () => {

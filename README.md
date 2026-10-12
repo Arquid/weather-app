@@ -13,7 +13,7 @@ A simple, modern weather application built with **React** that fetches current w
 - 🕒 Sunrise, sunset, and forecast dates shown in the searched city's local time  
 - 🌙 Dark and light mode toggle  
 - 🌡️ Celsius / Fahrenheit unit toggle (converted instantly, no extra request)  
-- 💾 Last searched city, theme, and unit remembered between visits (localStorage)  
+- 💾 Last successfully searched city, theme, and unit remembered between visits (localStorage); a failed search never replaces the saved city  
 - ⏳ Loading state while fetching data  
 - ⚠️ Error handling for invalid city names  
 - 🧊 Temperatures and wind speed rounded to 1 decimal  
@@ -21,6 +21,8 @@ A simple, modern weather application built with **React** that fetches current w
 ---
 
 ## Installation
+
+Requires **Node.js 20.19+ or 22.12+** (needed by Vite 8) and a free [OpenWeatherMap API key](https://home.openweathermap.org/api_keys).
 
 ```bash
 git clone https://github.com/Arquid/weather-app.git
@@ -37,6 +39,8 @@ cp .env.example .env
 ```
 VITE_WEATHER_API_KEY=your_api_key_here
 ```
+
+> **Note:** this is a browser-only app, so the key is embedded in the built JavaScript and visible to anyone who opens the site. `.env` keeps it out of git, not out of the browser. Use a free-tier key you don't mind being public.
 
 ```bash
 npm run dev

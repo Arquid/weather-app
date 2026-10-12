@@ -159,6 +159,18 @@ describe("Weather", () => {
     expect(await screen.findByText("city not found")).toBeInTheDocument();
   });
 
+  it("does not remember a city that was not found", async () => {
+    globalThis.fetch = mockFetchNotFound();
+    const user = userEvent.setup();
+    render(<Weather />);
+
+    await user.type(screen.getByLabelText("City"), "Asdfqwerty");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    await screen.findByText("city not found");
+    expect(localStorage.getItem("lastCity")).toBeNull();
+  });
+
   it("does not search when the input is only whitespace", async () => {
     globalThis.fetch = mockFetchSuccess();
     const user = userEvent.setup();
