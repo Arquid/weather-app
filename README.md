@@ -15,7 +15,7 @@ A simple, modern weather application built with **React** that fetches current w
 - 🌡️ Celsius / Fahrenheit unit toggle (converted instantly, no extra request)  
 - 💾 Last successfully searched city, theme, and unit remembered between visits (localStorage); a failed search never replaces the saved city. If the browser blocks site data, the app still works with default settings  
 - ⏳ Loading state while fetching data  
-- ⚠️ Error handling for invalid city names  
+- ⚠️ Clear error messages for unknown cities, invalid API keys, and network problems; a failed request never leaves another city's weather on screen  
 - 🧊 Temperatures and wind speed rounded to 1 decimal  
 
 ---

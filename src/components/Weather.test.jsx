@@ -159,6 +159,28 @@ describe("Weather", () => {
     expect(await screen.findByText("city not found")).toBeInTheDocument();
   });
 
+  it("clears the previous city's weather and explains the problem when the network fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    globalThis.fetch = mockFetchSuccess();
+    const user = userEvent.setup();
+    render(<Weather />);
+
+    await user.type(screen.getByLabelText("City"), "Helsinki");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+    await screen.findByRole("heading", { name: "Helsinki" });
+
+    globalThis.fetch = vi.fn(() => Promise.reject(new TypeError("Failed to fetch")));
+    await user.clear(screen.getByLabelText("City"));
+    await user.type(screen.getByLabelText("City"), "Oslo");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    expect(
+      await screen.findByText("Couldn't load the weather. Check your connection and try again.")
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Helsinki" })).not.toBeInTheDocument();
+    expect(document.querySelectorAll(".card")).toHaveLength(0);
+  });
+
   it("does not remember a city that was not found", async () => {
     globalThis.fetch = mockFetchNotFound();
     const user = userEvent.setup();

@@ -54,7 +54,9 @@ function Weather() {
     } catch (err) {
       if (err.name === "AbortError") return false;
       console.error(err);
-      setError("Something went wrong");
+      setError("Couldn't load the weather. Check your connection and try again.");
+      setCurrent(null);
+      setForecast([]);
       setLoading(false);
       return false;
     }
