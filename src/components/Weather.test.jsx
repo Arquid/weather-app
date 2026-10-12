@@ -171,6 +171,40 @@ describe("Weather", () => {
     expect(localStorage.getItem("lastCity")).toBeNull();
   });
 
+  describe("when the browser blocks localStorage", () => {
+    beforeEach(() => {
+      const blocked = () => {
+        throw new DOMException("The operation is insecure.", "SecurityError");
+      };
+      vi.spyOn(Storage.prototype, "getItem").mockImplementation(blocked);
+      vi.spyOn(Storage.prototype, "setItem").mockImplementation(blocked);
+    });
+
+    it("still renders with default settings", () => {
+      const { container } = render(<Weather />);
+
+      expect(screen.getByLabelText("City")).toHaveValue("");
+      expect(container.querySelector(".app")).not.toHaveClass("dark");
+      expect(screen.getByRole("button", { name: "°F" })).toBeInTheDocument();
+    });
+
+    it("still searches and toggles settings, without remembering them", async () => {
+      globalThis.fetch = mockFetchSuccess();
+      const user = userEvent.setup();
+      const { container } = render(<Weather />);
+
+      await user.type(screen.getByLabelText("City"), "Helsinki");
+      await user.click(screen.getByRole("button", { name: "Search" }));
+      expect(await screen.findByText("Helsinki")).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: /Dark/ }));
+      expect(container.querySelector(".app")).toHaveClass("dark");
+
+      await user.click(screen.getByRole("button", { name: "°F" }));
+      expect(screen.getByText("60.0 °F")).toBeInTheDocument();
+    });
+  });
+
   it("does not search when the input is only whitespace", async () => {
     globalThis.fetch = mockFetchSuccess();
     const user = userEvent.setup();

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import CurrentWeather from "./CurrentWeather";
 import ForecastCard from "./ForecastCard";
 import { pickMiddayForecasts } from "../utils/weather";
+import { readSetting, saveSetting } from "../utils/storage";
 
 const GEO_ERRORS = {
   1: "Location access denied — allow location access in your browser settings",
@@ -10,11 +11,11 @@ const GEO_ERRORS = {
 };
 
 function Weather() {
-  const [city, setCity] = useState(localStorage.getItem("lastCity") || "");
+  const [city, setCity] = useState(readSetting("lastCity", ""));
   const [current, setCurrent] = useState(null);
   const [forecast, setForecast] = useState([]);
-  const [darkMode, setDarkMode] = useState(localStorage.getItem("darkMode") === "true");
-  const [unit, setUnit] = useState(localStorage.getItem("unit") || "metric");
+  const [darkMode, setDarkMode] = useState(readSetting("darkMode", "false") === "true");
+  const [unit, setUnit] = useState(readSetting("unit", "metric"));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -69,7 +70,7 @@ function Weather() {
     if (didInit.current) return;
     didInit.current = true;
 
-    const savedCity = localStorage.getItem("lastCity");
+    const savedCity = readSetting("lastCity", "");
     if (savedCity) {
       Promise.resolve().then(() => fetchWeather(`q=${encodeURIComponent(savedCity)}`));
     }
@@ -80,7 +81,7 @@ function Weather() {
     if (!trimmedCity || loading) return;
 
     const ok = await fetchWeather(`q=${encodeURIComponent(trimmedCity)}`);
-    if (ok) localStorage.setItem("lastCity", trimmedCity);
+    if (ok) saveSetting("lastCity", trimmedCity);
   };
 
   const getWeatherByLocation = () => {
@@ -106,7 +107,7 @@ function Weather() {
   const toggleUnit = () => {
     const newUnit = unit === "metric" ? "imperial" : "metric";
     setUnit(newUnit);
-    localStorage.setItem("unit", newUnit);
+    saveSetting("unit", newUnit);
   };
 
   return (
@@ -124,7 +125,7 @@ function Weather() {
       <button onClick={getWeatherByLocation} disabled={loading}>📍 Own location</button>
       <button
         onClick={() => {
-          localStorage.setItem("darkMode", !darkMode);
+          saveSetting("darkMode", !darkMode);
           setDarkMode(!darkMode);
         }}
       >

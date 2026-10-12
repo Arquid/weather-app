@@ -13,7 +13,7 @@ A simple, modern weather application built with **React** that fetches current w
 - 🕒 Sunrise, sunset, and forecast dates shown in the searched city's local time  
 - 🌙 Dark and light mode toggle  
 - 🌡️ Celsius / Fahrenheit unit toggle (converted instantly, no extra request)  
-- 💾 Last successfully searched city, theme, and unit remembered between visits (localStorage); a failed search never replaces the saved city  
+- 💾 Last successfully searched city, theme, and unit remembered between visits (localStorage); a failed search never replaces the saved city. If the browser blocks site data, the app still works with default settings  
 - ⏳ Loading state while fetching data  
 - ⚠️ Error handling for invalid city names  
 - 🧊 Temperatures and wind speed rounded to 1 decimal  
@@ -57,6 +57,7 @@ src/
 │   ├── CurrentWeather.jsx  # current conditions panel
 │   └── ForecastCard.jsx    # one forecast day
 └── utils/
+    ├── storage.js          # safe localStorage reads and writes for saved settings
     └── weather.js          # unit conversion, local-time formatting, forecast day selection
 ```
 
@@ -68,6 +69,7 @@ Automated tests use **Vitest** and **React Testing Library**:
 
 - `src/components/Weather.test.jsx` — component tests for searching, errors, toggles, persistence, and geolocation
 - `src/utils/weather.test.js` — unit tests for conversions, time zones, and forecast day selection
+- `src/utils/storage.test.js` — unit tests for saved settings, including blocked storage
 
 `fetch`, geolocation, and `localStorage` are mocked, so no API key or network access is required to run them.
 
