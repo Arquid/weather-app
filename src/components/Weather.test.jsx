@@ -117,7 +117,7 @@ describe("Weather", () => {
     await user.click(screen.getByRole("button", { name: "Search" }));
 
     await screen.findByText("Tokyo");
-    expect(screen.getByText("Sunrise: 04.30 · Sunset: 18.55")).toBeInTheDocument();
+    expect(screen.getByText("Sunrise: 04:30 · Sunset: 18:55")).toBeInTheDocument();
   });
 
   it("picks the forecast entry closest to the city's local noon", async () => {

@@ -44,9 +44,28 @@ npm run dev
 
 ---
 
+## Project structure
+
+```
+src/
+├── components/
+│   ├── Weather.jsx         # state, data fetching, search and toggle controls
+│   ├── CurrentWeather.jsx  # current conditions panel
+│   └── ForecastCard.jsx    # one forecast day
+└── utils/
+    └── weather.js          # unit conversion, local-time formatting, forecast day selection
+```
+
+---
+
 ## Testing
 
-Automated tests use **Vitest** and **React Testing Library**. `fetch`, geolocation, and `localStorage` are mocked, so no API key or network access is required to run them.
+Automated tests use **Vitest** and **React Testing Library**:
+
+- `src/components/Weather.test.jsx` — component tests for searching, errors, toggles, persistence, and geolocation
+- `src/utils/weather.test.js` — unit tests for conversions, time zones, and forecast day selection
+
+`fetch`, geolocation, and `localStorage` are mocked, so no API key or network access is required to run them.
 
 ```bash
 npm test          # run once
