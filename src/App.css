@@ -25,8 +25,12 @@ body {
 }
 
 .error {
-  color: red;
+  color: #8b0000;
   margin-top: 10px;
+}
+
+.app.dark .error {
+  color: #ff8a80;
 }
 
 input {
