@@ -61,6 +61,25 @@ function mockFetchNotFound() {
   );
 }
 
+// Requests stay pending until respondFor(city) is called, and reject like real fetch when aborted.
+function mockFetchControlled() {
+  const pending = [];
+  const fetchMock = vi.fn(
+    (url, { signal } = {}) =>
+      new Promise((resolve, reject) => {
+        pending.push({ url, resolve });
+        signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+      })
+  );
+  const respondFor = (city) => {
+    for (const { url, resolve } of pending.filter((p) => p.url.includes(`q=${city}`))) {
+      const body = url.includes("/forecast") ? forecastData : { ...weatherData, name: city };
+      resolve({ ok: true, json: () => Promise.resolve(body) });
+    }
+  };
+  return { fetchMock, respondFor };
+}
+
 beforeEach(() => {
   vi.stubEnv("VITE_WEATHER_API_KEY", "test-api-key");
   localStorage.clear();
@@ -68,6 +87,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
@@ -430,24 +450,51 @@ describe("Weather", () => {
     expect(await screen.findByText("Location request timed out — try again")).toBeInTheDocument();
   });
 
-  it("disables the search buttons while a request is loading", async () => {
-    const resolvers = [];
-    globalThis.fetch = vi.fn(
-      () =>
-        new Promise((resolve) => {
-          resolvers.push(resolve);
-        })
-    );
+  it("keeps Search available while loading, and a newer search replaces the one still loading", async () => {
+    const { fetchMock, respondFor } = mockFetchControlled();
+    globalThis.fetch = fetchMock;
     const user = userEvent.setup();
     render(<Weather />);
 
-    await user.type(screen.getByPlaceholderText("Enter city"), "Helsinki");
+    const input = screen.getByLabelText("City");
+    await user.type(input, "Oslo");
     await user.click(screen.getByRole("button", { name: "Search" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Loading...");
+    expect(screen.getByRole("button", { name: "Search" })).toBeEnabled();
 
-    expect(screen.getByRole("button", { name: "Search" })).toBeDisabled();
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    await user.clear(input);
+    await user.type(input, "Rome{Enter}");
+    respondFor("Rome");
+    respondFor("Oslo"); // arrives late; its request was already cancelled
 
-    resolvers.forEach((resolve) => resolve({ ok: true, json: () => Promise.resolve(weatherData) }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Search" })).not.toBeDisabled());
+    expect(await screen.findByRole("heading", { name: "Rome" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Oslo" })).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toBeEmptyDOMElement();
+    expect(localStorage.getItem("lastCity")).toBe("Rome");
+  });
+
+  it("ignores a location that arrives after the user already searched for a city", async () => {
+    let deliverPosition;
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      geolocation: {
+        getCurrentPosition: (success) => {
+          deliverPosition = success;
+        },
+      },
+    });
+    globalThis.fetch = mockFetchSuccess({ ...weatherData, name: "Turku" });
+    const user = userEvent.setup();
+    render(<Weather />);
+
+    await user.click(screen.getByRole("button", { name: /Own location/ }));
+    await user.type(screen.getByLabelText("City"), "Turku{Enter}");
+    await screen.findByRole("heading", { name: "Turku" });
+
+    deliverPosition({ coords: { latitude: 60.1699, longitude: 24.9384 } });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(globalThis.fetch.mock.calls.some(([url]) => url.includes("lat="))).toBe(false);
+    expect(screen.getByRole("heading", { name: "Turku" })).toBeInTheDocument();
   });
 });

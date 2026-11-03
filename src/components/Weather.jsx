@@ -80,31 +80,36 @@ function Weather() {
 
   const getWeather = async () => {
     const trimmedCity = city.trim();
-    if (!trimmedCity || loading) return;
+    if (!trimmedCity) return;
 
     const ok = await fetchWeather(`q=${encodeURIComponent(trimmedCity)}`);
     if (ok) saveSetting("lastCity", trimmedCity);
   };
 
-  const getWeatherByLocation = () => {
-    if (loading) return;
+    const getWeatherByLocation = () => {
     if (!navigator.geolocation) {
       setError("Geolocation not supported");
       return;
     }
 
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        if (controller.signal.aborted) return;
         const { latitude, longitude } = position.coords;
         fetchWeather(`lat=${latitude}&lon=${longitude}`);
       },
       (err) => {
+        if (controller.signal.aborted) return;
         setError(GEO_ERRORS[err.code] || "Something went wrong while getting your location");
         setLoading(false);
       }
-    )
-  }
+    );
+  };
 
   const toggleUnit = () => {
     const newUnit = unit === "metric" ? "imperial" : "metric";
@@ -123,8 +128,8 @@ function Weather() {
         onChange={(e) => setCity(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && getWeather()}
       />
-      <button onClick={getWeather} disabled={loading}>Search</button>
-      <button onClick={getWeatherByLocation} disabled={loading}>📍 Own location</button>
+      <button onClick={getWeather}>Search</button>
+      <button onClick={getWeatherByLocation}>📍 Own location</button>
       <button
         onClick={() => {
           saveSetting("darkMode", !darkMode);
