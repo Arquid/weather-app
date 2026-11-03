@@ -78,3 +78,11 @@ Automated tests use **Vitest** and **React Testing Library**:
 npm test          # run once
 npm run test:watch  # watch mode
 ```
+
+Every push and pull request runs lint, tests, and a production build on GitHub Actions (`.github/workflows/ci.yml`).
+
+---
+
+## License
+
+[MIT](LICENSE)

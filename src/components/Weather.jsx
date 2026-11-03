@@ -86,7 +86,7 @@ function Weather() {
     if (ok) saveSetting("lastCity", trimmedCity);
   };
 
-    const getWeatherByLocation = () => {
+  const getWeatherByLocation = () => {
     if (!navigator.geolocation) {
       setError("Geolocation not supported");
       return;
