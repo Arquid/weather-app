@@ -80,6 +80,63 @@ describe("Weather", () => {
     expect(screen.getByRole("button", { name: /Dark/ })).toBeInTheDocument();
   });
 
+  describe("accessibility", () => {
+    it("puts the app in a main landmark", () => {
+      render(<Weather />);
+      expect(screen.getByRole("main")).toBeInTheDocument();
+    });
+
+    it("names the unit button by what it does", async () => {
+      const user = userEvent.setup();
+      render(<Weather />);
+
+      const toFahrenheit = screen.getByRole("button", { name: "Show temperatures in Fahrenheit" });
+      expect(toFahrenheit).toHaveTextContent("°F");
+
+      await user.click(toFahrenheit);
+
+      expect(screen.getByRole("button", { name: "Show temperatures in Celsius" })).toHaveTextContent("°C");
+    });
+
+    // Screen readers announce changes inside a live region only if the region was already
+    // in the page, so the same element must persist from before the request until after it.
+    it("announces loading through a status region that is always present", async () => {
+      let release;
+      const gate = new Promise((resolve) => {
+        release = resolve;
+      });
+      const respond = mockFetchSuccess();
+      globalThis.fetch = vi.fn((url) => gate.then(() => respond(url)));
+      const user = userEvent.setup();
+      render(<Weather />);
+
+      const status = screen.getByRole("status");
+      expect(status).toBeEmptyDOMElement();
+
+      await user.type(screen.getByLabelText("City"), "Helsinki");
+      await user.click(screen.getByRole("button", { name: "Search" }));
+      expect(status).toHaveTextContent("Loading...");
+
+      release();
+      await screen.findByRole("heading", { name: "Helsinki" });
+      expect(status).toBeEmptyDOMElement();
+    });
+
+    it("announces errors through an alert region that is always present", async () => {
+      globalThis.fetch = mockFetchNotFound();
+      const user = userEvent.setup();
+      render(<Weather />);
+
+      const alert = screen.getByRole("alert");
+      expect(alert).toBeEmptyDOMElement();
+
+      await user.type(screen.getByLabelText("City"), "Asdfqwerty");
+      await user.click(screen.getByRole("button", { name: "Search" }));
+
+      await waitFor(() => expect(alert).toHaveTextContent("city not found"));
+    });
+  });
+
   it("fetches and displays weather and forecast on search", async () => {
     globalThis.fetch = mockFetchSuccess();
     const user = userEvent.setup();
@@ -207,7 +264,7 @@ describe("Weather", () => {
 
       expect(screen.getByLabelText("City")).toHaveValue("");
       expect(container.querySelector(".app")).not.toHaveClass("dark");
-      expect(screen.getByRole("button", { name: "°F" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Fahrenheit/ })).toBeInTheDocument();
     });
 
     it("still searches and toggles settings, without remembering them", async () => {
@@ -222,7 +279,7 @@ describe("Weather", () => {
       await user.click(screen.getByRole("button", { name: /Dark/ }));
       expect(container.querySelector(".app")).toHaveClass("dark");
 
-      await user.click(screen.getByRole("button", { name: "°F" }));
+      await user.click(screen.getByRole("button", { name: /Fahrenheit/ }));
       expect(screen.getByText("60.0 °F")).toBeInTheDocument();
     });
   });
@@ -276,16 +333,16 @@ describe("Weather", () => {
     await screen.findByText("15.6 °C");
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
 
-    await user.click(screen.getByRole("button", { name: "°F" }));
+    await user.click(screen.getByRole("button", { name: /Fahrenheit/ }));
 
     expect(screen.getByText("60.0 °F")).toBeInTheDocument();
     expect(screen.getByText("Feels like: 55.8 °F")).toBeInTheDocument();
     expect(screen.getByText("Wind: 9.7 mph")).toBeInTheDocument();
     expect(localStorage.getItem("unit")).toBe("imperial");
-    expect(screen.getByRole("button", { name: "°C" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Celsius/ })).toBeInTheDocument();
     expect(globalThis.fetch).toHaveBeenCalledTimes(2); // toggling unit must not trigger a refetch
 
-    await user.click(screen.getByRole("button", { name: "°C" }));
+    await user.click(screen.getByRole("button", { name: /Celsius/ }));
 
     expect(screen.getByText("15.6 °C")).toBeInTheDocument();
     expect(localStorage.getItem("unit")).toBe("metric");

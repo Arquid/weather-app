@@ -113,7 +113,7 @@ function Weather() {
   };
 
   return (
-    <div className={darkMode ? "app dark" : "app"}>
+    <main className={darkMode ? "app dark" : "app"}>
       <h1>🌦️ Weather App</h1>
       <input
         type="text"
@@ -133,16 +133,21 @@ function Weather() {
       >
         {darkMode ? "☀️ Light" : "🌙 Dark"}
       </button>
-      <button onClick={toggleUnit}>{unit === "metric" ? "°F" : "°C"}</button>
-      {loading && <p>Loading...</p>}
-      {error && <p className="error">{error}</p>}
+      <button
+        onClick={toggleUnit}
+        aria-label={unit === "metric" ? "Show temperatures in Fahrenheit" : "Show temperatures in Celsius"}
+      >
+        {unit === "metric" ? "°F" : "°C"}
+      </button>
+      <div role="status">{loading && <p>Loading...</p>}</div>
+      <div role="alert">{error && <p className="error">{error}</p>}</div>
       {current && <CurrentWeather data={current} unit={unit} />}
       <div className="forecast">
         {forecast.map((day) => (
           <ForecastCard key={day.dt} day={day} unit={unit} tzOffset={current?.timezone ?? 0} />
         ))}
       </div>
-    </div>
+    </main>
   );
 }
 
