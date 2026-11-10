@@ -43,22 +43,22 @@ function Weather() {
         setCurrent(null);
         setForecast([]);
         setLoading(false);
-        return false;
+        return null;
       }
 
       setCurrent(data1);
       const tzOffset = data2.city?.timezone ?? data1.timezone ?? 0;
       setForecast(pickMiddayForecasts(data2.list, tzOffset));
       setLoading(false);
-      return true;
+      return data1;
     } catch (err) {
-      if (err.name === "AbortError") return false;
+      if (err.name === "AbortError") return null;
       console.error(err);
       setError("Couldn't load the weather. Check your connection and try again.");
       setCurrent(null);
       setForecast([]);
       setLoading(false);
-      return false;
+      return null;
     }
   }, [apiKey]);
 
@@ -82,8 +82,8 @@ function Weather() {
     const trimmedCity = city.trim();
     if (!trimmedCity) return;
 
-    const ok = await fetchWeather(`q=${encodeURIComponent(trimmedCity)}`);
-    if (ok) saveSetting("lastCity", trimmedCity);
+    const data = await fetchWeather(`q=${encodeURIComponent(trimmedCity)}`);
+    if (data) saveSetting("lastCity", trimmedCity);
   };
 
   const getWeatherByLocation = () => {
@@ -98,10 +98,11 @@ function Weather() {
 
     setLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         if (controller.signal.aborted) return;
         const { latitude, longitude } = position.coords;
-        fetchWeather(`lat=${latitude}&lon=${longitude}`);
+        const data = await fetchWeather(`lat=${latitude}&lon=${longitude}`);
+        if (data) setCity(data.name);
       },
       (err) => {
         if (controller.signal.aborted) return;

@@ -7,7 +7,7 @@ A simple, modern weather application built with **React** that fetches current w
 ## Features
 
 - 🌍 Search weather by city name; starting a new search (or a location lookup) cancels one that is still loading, so the latest request always wins  
-- 📍 "Own location" search using browser geolocation, with clear messages for denied, unavailable, or timed-out location requests  
+- 📍 "Own location" search using browser geolocation; the located place's name appears in the search box. Clear messages for denied, unavailable, or timed-out location requests  
 - 🌤️ Current conditions: temperature, feels-like temperature, wind speed, humidity, sunrise and sunset  
 - 📅 5-day forecast (one entry per day, closest to local noon) with date, temperature, wind speed, humidity, and weather icon  
 - 🕒 Sunrise, sunset, and forecast dates shown in the searched city's local time  

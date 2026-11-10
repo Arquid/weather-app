@@ -400,6 +400,32 @@ describe("Weather", () => {
     expect(globalThis.fetch.mock.calls[0][0]).toContain("lon=24.9384");
   });
 
+  it("shows the located place in the search box after a location search, without saving it", async () => {
+    globalThis.fetch = vi.fn((url) => {
+      const name = url.includes("lat=") ? "Horinouchi" : "Turku";
+      const body = url.includes("/forecast") ? forecastData : { ...weatherData, name };
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(body) });
+    });
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      geolocation: {
+        getCurrentPosition: (success) =>
+          success({ coords: { latitude: 35.6762, longitude: 139.6503 } }),
+      },
+    });
+    const user = userEvent.setup();
+    render(<Weather />);
+
+    await user.type(screen.getByLabelText("City"), "Turku{Enter}");
+    await screen.findByRole("heading", { name: "Turku" });
+
+    await user.click(screen.getByRole("button", { name: /Own location/ }));
+    await screen.findByRole("heading", { name: "Horinouchi" });
+
+    expect(screen.getByLabelText("City")).toHaveValue("Horinouchi");
+    expect(localStorage.getItem("lastCity")).toBe("Turku");
+  });
+
   it("shows a specific error when geolocation permission is denied", async () => {
     vi.stubGlobal("navigator", {
       ...navigator,
