@@ -52,14 +52,19 @@ function mockFetchSuccess(current = weatherData, forecast = forecastData) {
   });
 }
 
-function mockFetchNotFound() {
+function mockFetchError(status, message) {
   return vi.fn(() =>
     Promise.resolve({
       ok: false,
-      json: () => Promise.resolve({ cod: "404", message: "city not found" }),
+      status,
+      json: () => Promise.resolve({ cod: String(status), message }),
     })
   );
 }
+
+const mockFetchNotFound = () => mockFetchError(404, "city not found");
+
+const NOT_FOUND_MESSAGE = "No place with that name was found. Check the spelling and try again.";
 
 // Requests stay pending until respondFor(city) is called, and reject like real fetch when aborted.
 function mockFetchControlled() {
@@ -153,7 +158,7 @@ describe("Weather", () => {
       await user.type(screen.getByLabelText("City"), "Asdfqwerty");
       await user.click(screen.getByRole("button", { name: "Search" }));
 
-      await waitFor(() => expect(alert).toHaveTextContent("city not found"));
+      await waitFor(() => expect(alert).toHaveTextContent(NOT_FOUND_MESSAGE));
     });
   });
 
@@ -225,15 +230,27 @@ describe("Weather", () => {
     }
   });
 
-  it("shows the API's own error message when the city is not found", async () => {
-    globalThis.fetch = mockFetchNotFound();
-    const user = userEvent.setup();
-    render(<Weather />);
+  describe("explains weather service errors in plain words instead of showing the raw API text", () => {
+    it.each([
+      [404, "city not found", NOT_FOUND_MESSAGE],
+      [
+        401,
+        "Invalid API key. Please see https://openweathermap.org/faq#error401 for more info.",
+        "The weather service rejected the API key. Check VITE_WEATHER_API_KEY in your .env file.",
+      ],
+      [429, "Your account is temporary blocked", "Too many requests right now. Wait a minute and try again."],
+      [500, "Internal error", "The weather service returned an error (500). Try again in a moment."],
+    ])("HTTP %i", async (status, apiMessage, shownMessage) => {
+      globalThis.fetch = mockFetchError(status, apiMessage);
+      const user = userEvent.setup();
+      render(<Weather />);
 
-    await user.type(screen.getByPlaceholderText("Enter city"), "Asdfqwerty");
-    await user.click(screen.getByRole("button", { name: "Search" }));
+      await user.type(screen.getByLabelText("City"), "Asdfqwerty{Enter}");
 
-    expect(await screen.findByText("city not found")).toBeInTheDocument();
+      const alert = screen.getByRole("alert");
+      await waitFor(() => expect(alert).toHaveTextContent(shownMessage));
+      expect(alert).not.toHaveTextContent(apiMessage);
+    });
   });
 
   it("clears the previous city's weather and explains the problem when the network fails", async () => {
@@ -266,7 +283,7 @@ describe("Weather", () => {
     await user.type(screen.getByLabelText("City"), "Asdfqwerty");
     await user.click(screen.getByRole("button", { name: "Search" }));
 
-    await screen.findByText("city not found");
+    await screen.findByText(NOT_FOUND_MESSAGE);
     expect(localStorage.getItem("lastCity")).toBeNull();
   });
 

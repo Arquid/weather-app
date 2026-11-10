@@ -10,6 +10,12 @@ const GEO_ERRORS = {
   3: "Location request timed out — try again",
 };
 
+const API_ERRORS = {
+  401: "The weather service rejected the API key. Check VITE_WEATHER_API_KEY in your .env file.",
+  404: "No place with that name was found. Check the spelling and try again.",
+  429: "Too many requests right now. Wait a minute and try again.",
+};
+
 function Weather() {
   const [city, setCity] = useState(readSetting("lastCity", ""));
   const [current, setCurrent] = useState(null);
@@ -36,15 +42,17 @@ function Weather() {
         fetch(`https://api.openweathermap.org/data/2.5/weather?${query}&appid=${apiKey}&units=metric`, { signal: controller.signal }),
         fetch(`https://api.openweathermap.org/data/2.5/forecast?${query}&appid=${apiKey}&units=metric`, { signal: controller.signal })
       ]);
-      const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
 
       if (!res1.ok || !res2.ok) {
-        setError(data1.message || data2.message || "Something went wrong");
+        const status = !res1.ok ? res1.status : res2.status;
+        setError(API_ERRORS[status] || `The weather service returned an error (${status}). Try again in a moment.`);
         setCurrent(null);
         setForecast([]);
         setLoading(false);
         return null;
       }
+
+      const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
 
       setCurrent(data1);
       const tzOffset = data2.city?.timezone ?? data1.timezone ?? 0;
