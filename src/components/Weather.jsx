@@ -149,12 +149,16 @@ function Weather() {
         onKeyDown={(e) => e.key === "Enter" && getWeather()}
       />
       <button onClick={getWeather}>Search</button>
-      <button onClick={getWeatherByLocation}>📍 Own location</button>
+      <button
+        onClick={getWeatherByLocation}
+        aria-label="Use my location"
+      >📍 Own location</button>
       <button
         onClick={() => {
           saveSetting("darkMode", !darkMode);
           setDarkMode(!darkMode);
         }}
+        aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
       >
         {darkMode ? "☀️ Light" : "🌙 Dark"}
       </button>

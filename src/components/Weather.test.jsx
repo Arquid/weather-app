@@ -101,8 +101,8 @@ describe("Weather", () => {
     render(<Weather />);
     expect(screen.getByPlaceholderText("Enter city")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Own location/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Dark/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use my location" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Switch to dark mode" })).toBeInTheDocument();
   });
 
   describe("accessibility", () => {
@@ -121,6 +121,23 @@ describe("Weather", () => {
       await user.click(toFahrenheit);
 
       expect(screen.getByRole("button", { name: "Show temperatures in Celsius" })).toHaveTextContent("°C");
+    });
+
+    it("names the location button by what it does, keeping the emoji as visible text only", () => {
+      render(<Weather />);
+      expect(screen.getByRole("button", { name: "Use my location" })).toHaveTextContent("📍 Own location");
+    });
+
+    it("names the theme button by what it does, keeping the emoji as visible text only", async () => {
+      const user = userEvent.setup();
+      render(<Weather />);
+
+      const toDark = screen.getByRole("button", { name: "Switch to dark mode" });
+      expect(toDark).toHaveTextContent("🌙 Dark");
+
+      await user.click(toDark);
+
+      expect(screen.getByRole("button", { name: "Switch to light mode" })).toHaveTextContent("☀️ Light");
     });
 
     // Screen readers announce changes inside a live region only if the region was already
@@ -313,7 +330,7 @@ describe("Weather", () => {
       await user.click(screen.getByRole("button", { name: "Search" }));
       expect(await screen.findByText("Helsinki")).toBeInTheDocument();
 
-      await user.click(screen.getByRole("button", { name: /Dark/ }));
+      await user.click(screen.getByRole("button", { name: "Switch to dark mode" }));
       expect(container.querySelector(".app")).toHaveClass("dark");
 
       await user.click(screen.getByRole("button", { name: /Fahrenheit/ }));
@@ -352,11 +369,11 @@ describe("Weather", () => {
 
     expect(container.querySelector(".app")).not.toHaveClass("dark");
 
-    await user.click(screen.getByRole("button", { name: /Dark/ }));
+    await user.click(screen.getByRole("button", { name: "Switch to dark mode" }));
 
     expect(container.querySelector(".app")).toHaveClass("dark");
     expect(localStorage.getItem("darkMode")).toBe("true");
-    expect(screen.getByRole("button", { name: /Light/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Switch to light mode" })).toBeInTheDocument();
   });
 
   describe("initial theme", () => {
@@ -446,7 +463,7 @@ describe("Weather", () => {
     const user = userEvent.setup();
     render(<Weather />);
 
-    await user.click(screen.getByRole("button", { name: /Own location/ }));
+    await user.click(screen.getByRole("button", { name: "Use my location" }));
 
     await screen.findByText("Helsinki");
     expect(globalThis.fetch.mock.calls[0][0]).toContain("lat=60.1699");
@@ -472,7 +489,7 @@ describe("Weather", () => {
     await user.type(screen.getByLabelText("City"), "Turku{Enter}");
     await screen.findByRole("heading", { name: "Turku" });
 
-    await user.click(screen.getByRole("button", { name: /Own location/ }));
+    await user.click(screen.getByRole("button", { name: "Use my location" }));
     await screen.findByRole("heading", { name: "Horinouchi" });
 
     expect(screen.getByLabelText("City")).toHaveValue("Horinouchi");
@@ -490,7 +507,7 @@ describe("Weather", () => {
     const user = userEvent.setup();
     render(<Weather />);
 
-    await user.click(screen.getByRole("button", { name: /Own location/ }));
+    await user.click(screen.getByRole("button", { name: "Use my location" }));
 
     expect(
       await screen.findByText("Location access denied — allow location access in your browser settings")
@@ -508,7 +525,7 @@ describe("Weather", () => {
     const user = userEvent.setup();
     render(<Weather />);
 
-    await user.click(screen.getByRole("button", { name: /Own location/ }));
+    await user.click(screen.getByRole("button", { name: "Use my location" }));
 
     expect(await screen.findByText("Your location could not be determined")).toBeInTheDocument();
   });
@@ -524,7 +541,7 @@ describe("Weather", () => {
     const user = userEvent.setup();
     render(<Weather />);
 
-    await user.click(screen.getByRole("button", { name: /Own location/ }));
+    await user.click(screen.getByRole("button", { name: "Use my location" }));
 
     expect(await screen.findByText("Location request timed out — try again")).toBeInTheDocument();
   });
@@ -566,7 +583,7 @@ describe("Weather", () => {
     const user = userEvent.setup();
     render(<Weather />);
 
-    await user.click(screen.getByRole("button", { name: /Own location/ }));
+    await user.click(screen.getByRole("button", { name: "Use my location" }));
     await user.type(screen.getByLabelText("City"), "Turku{Enter}");
     await screen.findByRole("heading", { name: "Turku" });
 
