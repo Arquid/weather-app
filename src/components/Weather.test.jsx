@@ -359,6 +359,42 @@ describe("Weather", () => {
     expect(screen.getByRole("button", { name: /Light/ })).toBeInTheDocument();
   });
 
+  describe("initial theme", () => {
+    const setSystemTheme = (theme) => {
+      vi.stubGlobal("matchMedia", (query) => ({
+        media: query,
+        matches: query === "(prefers-color-scheme: dark)" && theme === "dark",
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      }));
+    };
+
+    it.each([
+      ["dark", true],
+      ["light", false],
+    ])("follows a %s system theme on the first visit", (systemTheme, expectDark) => {
+      setSystemTheme(systemTheme);
+      const { container } = render(<Weather />);
+      expect(container.querySelector(".app").classList.contains("dark")).toBe(expectDark);
+    });
+
+    it.each([
+      ["false", "dark", false],
+      ["true", "light", true],
+    ])("keeps the saved choice darkMode=%s even when the system theme is %s", (saved, systemTheme, expectDark) => {
+      localStorage.setItem("darkMode", saved);
+      setSystemTheme(systemTheme);
+      const { container } = render(<Weather />);
+      expect(container.querySelector(".app").classList.contains("dark")).toBe(expectDark);
+    });
+
+    it("starts in light mode when the browser can't report a system theme", () => {
+      vi.stubGlobal("matchMedia", undefined);
+      const { container } = render(<Weather />);
+      expect(container.querySelector(".app")).not.toHaveClass("dark");
+    });
+  });
+
   it("toggles between Celsius and Fahrenheit without an extra fetch", async () => {
     globalThis.fetch = mockFetchSuccess();
     const user = userEvent.setup();

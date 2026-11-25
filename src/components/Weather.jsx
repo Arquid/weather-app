@@ -16,11 +16,22 @@ const API_ERRORS = {
   429: "Too many requests right now. Wait a minute and try again.",
 };
 
+const systemPrefersDark = () => {
+  try {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  } catch {
+    return false;
+  }
+};
+
 function Weather() {
   const [city, setCity] = useState(readSetting("lastCity", ""));
   const [current, setCurrent] = useState(null);
   const [forecast, setForecast] = useState([]);
-  const [darkMode, setDarkMode] = useState(readSetting("darkMode", "false") === "true");
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = readSetting("darkMode", null);
+    return saved === null ? systemPrefersDark() : saved === "true";
+  });
   const [unit, setUnit] = useState(readSetting("unit", "metric"));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

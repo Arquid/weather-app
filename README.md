@@ -11,7 +11,7 @@ A simple, modern weather application built with **React** that fetches current w
 - 🌤️ Current conditions: temperature, feels-like temperature, wind speed, humidity, sunrise and sunset  
 - 📅 5-day forecast (one entry per day, closest to local noon) with date, temperature, wind speed, humidity, and weather icon  
 - 🕒 Sunrise, sunset, and forecast dates shown in the searched city's local time  
-- 🌙 Dark and light mode toggle  
+- 🌙 Dark and light mode toggle; on the first visit the app follows the operating system's theme, after that your own choice wins  
 - 🌡️ Celsius / Fahrenheit unit toggle (converted instantly, no extra request)  
 - 💾 Last successfully searched city, theme, and unit remembered between visits (localStorage); a failed search never replaces the saved city. If the browser blocks site data, the app still works with default settings  
 - ⏳ Loading state while fetching data  
