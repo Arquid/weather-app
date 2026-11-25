@@ -68,6 +68,7 @@ src/
 
 Automated tests use **Vitest** and **React Testing Library**:
 
+- `src/App.test.jsx` — smoke test that the app renders
 - `src/components/Weather.test.jsx` — component tests for searching, errors, toggles, persistence, and geolocation
 - `src/utils/weather.test.js` — unit tests for conversions, time zones, and forecast day selection
 - `src/utils/storage.test.js` — unit tests for saved settings, including blocked storage
@@ -75,11 +76,12 @@ Automated tests use **Vitest** and **React Testing Library**:
 `fetch`, geolocation, and `localStorage` are mocked, so no API key or network access is required to run them.
 
 ```bash
-npm test          # run once
-npm run test:watch  # watch mode
+npm test               # run once
+npm run test:watch     # watch mode
+npm run test:coverage  # run once with a coverage report (HTML report in coverage/index.html)
 ```
 
-Every push and pull request runs lint, tests, and a production build on GitHub Actions (`.github/workflows/ci.yml`).
+Every push and pull request runs lint, tests, and a production build on GitHub Actions (`.github/workflows/ci.yml`). Dependabot (`.github/dependabot.yml`) opens weekly pull requests for dependency and GitHub Actions updates, so each update is checked by CI before it is merged.
 
 ---
 

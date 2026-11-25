@@ -546,6 +546,34 @@ describe("Weather", () => {
     expect(await screen.findByText("Location request timed out — try again")).toBeInTheDocument();
   });
 
+  it("explains when the browser doesn't support geolocation, without starting a request", async () => {
+    vi.stubGlobal("navigator", { ...navigator, geolocation: undefined });
+    globalThis.fetch = vi.fn();
+    const user = userEvent.setup();
+    render(<Weather />);
+
+    await user.click(screen.getByRole("button", { name: "Use my location" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Geolocation not supported");
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  describe("API key check", () => {
+    it("warns in the console when VITE_WEATHER_API_KEY is missing", () => {
+      vi.stubEnv("VITE_WEATHER_API_KEY", "");
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      render(<Weather />);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("VITE_WEATHER_API_KEY is not set"));
+    });
+
+    it("stays quiet when the key is set", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      render(<Weather />);
+      expect(warn).not.toHaveBeenCalled();
+    });
+  });
+
   it("keeps Search available while loading, and a newer search replaces the one still loading", async () => {
     const { fetchMock, respondFor } = mockFetchControlled();
     globalThis.fetch = fetchMock;

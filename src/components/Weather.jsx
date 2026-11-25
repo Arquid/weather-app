@@ -152,7 +152,9 @@ function Weather() {
       <button
         onClick={getWeatherByLocation}
         aria-label="Use my location"
-      >📍 Own location</button>
+      >
+        📍 Own location
+      </button>
       <button
         onClick={() => {
           saveSetting("darkMode", !darkMode);
