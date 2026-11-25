@@ -1,5 +1,7 @@
 # React Weather App 🌦️
 
+[![CI](https://github.com/Arquid/weather-app/actions/workflows/ci.yml/badge.svg)](https://github.com/Arquid/weather-app/actions/workflows/ci.yml)
+
 A simple, modern weather application built with **React** that fetches current weather and 5-day forecast data from the **OpenWeatherMap API**. Features include detailed current conditions, dark mode, geolocation search, a °C/°F toggle, persisted preferences, loading state, and error handling.
 
 ---
@@ -54,9 +56,11 @@ npm run dev
 ```
 src/
 ├── components/
-│   ├── Weather.jsx         # state, data fetching, search and toggle controls
+│   ├── Weather.jsx         # page layout, search box, theme and unit controls
 │   ├── CurrentWeather.jsx  # current conditions panel
 │   └── ForecastCard.jsx    # one forecast day
+├── hooks/
+│   └── useWeather.js       # data fetching: city and location search, cancelling, errors, restoring the last city
 └── utils/
     ├── storage.js          # safe localStorage reads and writes for saved settings
     └── weather.js          # unit conversion, local-time formatting, forecast day selection
@@ -70,6 +74,7 @@ Automated tests use **Vitest** and **React Testing Library**:
 
 - `src/App.test.jsx` — smoke test that the app renders
 - `src/components/Weather.test.jsx` — component tests for searching, errors, toggles, persistence, and geolocation
+- `src/hooks/useWeather.test.js` — tests for the data-fetching hook on its own, without the UI
 - `src/utils/weather.test.js` — unit tests for conversions, time zones, and forecast day selection
 - `src/utils/storage.test.js` — unit tests for saved settings, including blocked storage
 
